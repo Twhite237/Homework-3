@@ -1,0 +1,38 @@
+---
+title: "Homework2"
+format: html
+---
+
+# Homework 1
+
+## Task 1
+
+1.  "../myData.csv". ".." means that we should go up one level from the current working directory
+2.  The major benefits of using R projects are the following:
+
+-   Projects are completely self-contained, so all input files, output, and code used in the project can be exported so that others who want to collaborate on the project have the same environment as you
+-   Projects integrate easily to Github repositories. This also makes it very easy to collaborate with others and maintain version control.
+
+3.  Git is a open-source software for maintaining version controlled files within folders (repositories). Github is an application that buds on Git and allows for the creation of remote repositories. Users can pull repositories from a remote repository, work on them, and push changes back to the remote repository. Github also adds functionality to collaborate with others.
+
+4.  
+
+-   A tibble is a dataframe with additional properties, such as more organized printouts.
+-   Tibbles are designed to function within the tidyverse package, whereas dataframes do not have this functionality
+
+5. 
+
+```{r}
+library(tidyverse)
+
+iris |> 
+  as_tibble() |>
+  select(starts_with("Petal"), Species) |>
+  filter(Petal.Length < 1.55) |>
+  arrange(Species)
+  
+```
+
+6. "Long" format refers to data where each observation has its own row, and each variable for the observation is observed in a column. "Short" format refers to organizing data such that each variable has its own axis, and each value of the variable is its own row / column. 
+
+
