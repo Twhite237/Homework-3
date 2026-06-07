@@ -13,13 +13,13 @@ This assignment practices reading, combining, and manipulating different data ty
 
    I would use the command `../MyData.csv` to access the file.
 
-2. What are the m ajor benefits of using `R` projects?
+2. What are the major benefits of using `R` projects?
 
    It maintains a consistent working directory.
 
 3. What is `Git` and what is `GitHub`?
 
-   `Git` is a code version manager and `GitHub` is an online `Git` center.
+   `Git` is a version management software and `GitHub` is an online `Git` center.
     
 4. What are the two main differences between a `tibble` and a `data.frame`?
 
@@ -52,3 +52,51 @@ as_tibble(iris) |>
 6. What is meant by long format data and wide format data? Which do we generally prefer for statistical analysis?
 
    Wide format data is useful when a variable has several observations, so called because it tends to have fewer rows but more columns (one per observation) than the long format, which splits each of the observations across a different row, thus resulting in more rows but fewer columns. While the wide format is used for ease of viewing, for statistical analysis, the long format is preferred.
+   
+# Task 2: Reading Delimited Data
+The data sets for this portion come from the [UCI machine learning repository](https://archive.ics.uci.edu/datasets).
+
+## Glass Data
+Opening this file shows that the data is delimited by commas, `,`. The source of the data is [here]( https://www4.stat.ncsu.edu/~online/datasets/glass.data).
+
+1. First we create the column names and read in the data.
+```{r hw_3_task_2_response_1}
+glass_col_names <- c("Id", "RI", "Na", "Mg", "Al", "Si", "K", "Ca", "Ba", "Fe",
+                     "Type_of_glass")
+
+glass <- read_csv("https://www4.stat.ncsu.edu/~online/datasets/glass.data",
+                  col_names = glass_col_names
+                  )
+
+glass
+```
+
+2. Next we use a chain to overwrite the `Type_of_glass` variable and create a factor version of this variable. Then we replace the numbered factors with descriptive string factors.
+```{r hw_3_task_2_response_2}
+glass_factors <- c(building_windows_float_processed = '1', 
+                   building_windows_non_float_processed = '2',
+                   vehicle_windows_float_processed = '3',
+                   vehicle_windows_non_float_processed = '4',
+                   containers = '5',
+                   tableware = '6',
+                   headlamps = '7')
+
+glass <- glass |> 
+            mutate("Type_of_glass" = as.factor(Type_of_glass)) |>
+            mutate("Type_of_glass" = fct_recode(Type_of_glass,
+                                                !!!glass_factors))
+
+glass
+```
+
+Note that while a warning is given regarding the factor level `4`, viz., `vehicle_windows_non_float_processed`, this is merely because this factor, as indicated in the file description, has no observations in this database.
+
+3. Finally, we purge the database of all observations except those where the iron, `Fe`, is less than $0.2$ and the `Type_of_glass` is either `tableware` or `headlamps`.
+```{r hw_3_task_2_response_3}
+glass <- glass |>
+            filter((Fe < 0.3) & 
+                      (Type_of_glass %in% c("tableware", "headlamps")))
+
+glass
+```
+
