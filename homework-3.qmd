@@ -1,6 +1,54 @@
 ---
 title: "Homework 3"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Preamble
+This assignment practices reading, combining, and manipulating different data types, such as Excel, comma-separated values (CSV), and databases.
+
+# Task 1: Conceptual Questions
+1. If your working directory is `myfolder/homework/`, what _relative_ path would you specify to get the file located at `myfolder/MyData.csv`?
+
+   I would use the command `../MyData.csv` to access the file.
+
+2. What are the m ajor benefits of using `R` projects?
+
+   It maintains a consistent working directory.
+
+3. What is `Git` and what is `GitHub`?
+
+   `Git` is a code version manager and `GitHub` is an online `Git` center.
+    
+4. What are the two main differences between a `tibble` and a `data.frame`?
+
+   A `tibble` is "lazy and surly,"
+    
+5. Rewrite the following nested function call using `baseR`'s chaining operator:
+
+```{r hw_3_task_1_question_5}
+#| warning: false
+#| message: false
+
+library(tidyverse)
+arrange(filter(select(as_tibble(iris), starts_with("Petal"), Species),
+              Petal.Length < 1.55), Species)
+```
+
+   The appropriate code using the chaining operator is
+   
+```{r hw_3_task_1_question_5_response}
+#| warning: false
+#| message: false
+
+library(tidyverse)
+as_tibble(iris) |>
+  select(starts_with("Petal"), Species) |>
+  filter(Petal.Length < 1.55) |>
+  arrange(Species)
+```
+
+6. What is meant by long format data and wide format data? Which do we generally prefer for statistical analysis?
+
+   Wide format data is useful when a variable has several observations, so called because it tends to have fewer rows but more columns (one per observation) than the long format, which splits each of the observations across a different row, thus resulting in more rows but fewer columns. While the wide format is used for ease of viewing, for statistical analysis, the long format is preferred.
