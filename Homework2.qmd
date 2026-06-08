@@ -36,3 +36,78 @@ iris |>
 6. "Long" format refers to data where each observation has its own row, and each variable for the observation is observed in a column. "Short" format refers to organizing data such that each variable has its own axis, and each value of the variable is its own row / column. 
 
 
+## Task 2
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+data = read_csv("https://www4.stat.ncsu.edu/online/datasets/glass.data", col_names = FALSE )
+
+data = as_tibble(data)
+
+data = data |> rename(Id = X1, RI = X2, Na = X3, Mg = X4, Al = X5, Si = X6, K = X7, Ca = X8, Ba = X9, Fe = X10, type_glass = X11)
+
+head(data)
+
+
+```
+
+```{r}
+
+for (i in 1:nrow(data)){
+  if (data$type_glass[i] == 1){
+    data$type_glass[i] = "building_windows_float_processed"
+  }
+  else if (data$type_glass[i] == 2){
+    data$type_glass[i] = "building_windows_non_float_processed"
+  }
+  else if (data$type_glass[i] == 3){
+    data$type_glass[i] = "vehicle_windows_float_processed"
+  }
+  else if (data$type_glass[i] == 4){
+    data$type_glass[i] = "vehicle_windows_non_float_processed"
+  }
+  else if (data$type_glass[i] == 5){
+    data$type_glass[i] = "containers"
+  }
+  else if (data$type_glass[i] == 6){
+    data$type_glass[i] = "tableware"
+  }
+  else if (data$type_glass[i] == 7){
+    data$type_glass[i] = "headlamps"
+  }
+  
+}
+
+data$type_glass = as_factor(data$type_glass)
+
+head(data)
+  
+
+```
+
+
+```{r}
+data = data |> filter(Fe < .2, type_glass == "tableware"|type_glass == "headlamp")
+
+head(data)
+```
+
+## Yeast Data
+
+```{r}
+yeast = read_table("https://www4.stat.ncsu.edu/online/datasets/yeast.data", col_names = c("seq_name","mcg","gvh","alm","mit","erl","pox","vac","nuc","class"))
+
+head(yeast)
+```
+```{r}
+yeast = yeast |> select(-seq_name, -nuc) |>
+  group_by(class) |>
+  mutate(across(.cols = c(mcg,gvh,alm,mit,erl,pox,vac), .fns = c(mean, median), .names = NULL, .unpack = FALSE))
+
+yeast
+```
+
