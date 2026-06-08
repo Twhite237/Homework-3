@@ -15,7 +15,7 @@ This assignment practices reading, combining, and manipulating different data ty
 
 2. What are the major benefits of using `R` projects?
 
-   It maintains a consistent working directory.
+   It maintains a consistent working directory, "ties" all the necessary files together, and makes it easier to sync with `GitHub`.
 
 3. What is `Git` and what is `GitHub`?
 
@@ -23,7 +23,7 @@ This assignment practices reading, combining, and manipulating different data ty
     
 4. What are the two main differences between a `tibble` and a `data.frame`?
 
-   A `tibble` is "lazy and surly,"
+   A `tibble` is "lazy and surly," meaning they perform as few operations as possible and present more warning messages. A `tibble` is a specific type of `data.frame` that is presented more nicely when printed, and because of its surliness tends to cause fewer problems compared to a generic `data.frame`.
     
 5. Rewrite the following nested function call using `baseR`'s chaining operator:
 
@@ -252,3 +252,113 @@ wine_data_final <- wine_data_modified |>
 wine_data_final
 ```
 
+# Task 4: Database Practice
+To conserve space, the `Lahman.db` file is not saved within the same folder as this homework.
+
+## Import
+1. First we connect to the database and examine all the tables.
+
+```{r homework_3_task_4_response_1}
+library(DBI)
+
+con <-dbConnect(RSQLite::SQLite(),
+                "../lahman.db")
+
+dbListTables(con)
+```
+
+2. We will make use of the `Teams` (the $26$th) table, in particular from the year $2015$, using `dplyr`.
+
+```{r hw_3_task_4_response_2}
+tbl(con, "Teams") |>
+   filter(yearID == 2015) |>
+   collect()
+```
+
+3. We repeat the previous step, this time using `SQL` instead of `R` and `dplyr`. To recover the precise commands, we use the `show_query()` function from `dplyr`.
+
+```{r hw_3_task_4_response_3_part_1}
+tbl(con, "Teams") |>
+   filter(yearID == 2015) |>
+   show_query()
+```
+
+Then we can produce the previous output using the indicated results.
+
+```{r hw_3_task_4_response_3_part_2}
+tbl(con, sql(
+   "SELECT `Teams`.*
+   FROM `Teams`
+   WHERE (`yearID` == 2015.0)")
+)
+```
+
+## Hall of Fame
+4. Now we work with the `HallOfFame` table, returning the player, year they were voted in, and their category. Since this data set includes those who were not inducted, we must `filter` on that condition.
+
+```{r hw_3_task_4_response_4}
+tbl(con, "HallOfFame") |>
+  filter(inducted == 'Y') |>
+  select(playerID, yearID, category) |>
+  collect()
+```
+
+5. Now we combine this table with the appropriate person from the table `People` so that we can identify the first and last names more easily.
+
+```{r hw_3_task_4_response_5}
+HOF <- left_join(tbl(con, "HallOfFame") |> filter(inducted == 'Y'),
+                 tbl(con, "People"),
+                 by = "playerID") |>
+         select(nameLast, nameFirst, playerID, yearID, category) |>
+         collect()
+
+HOF
+```
+
+(Note: Evidently there are two records that are not shared between the two tables, and so they are removed via the inner join; hence we have used a `left_join`.)
+
+## Managers
+Now we work with the `Managers` table.
+
+6. We calculate, per manager, the overall number of games managed, won, and lost.
+
+```{r hw_3_task_4_response_6_part_1}
+managers <- tbl(con, "Managers") |>
+                select(playerID, G, W, L) |>
+                group_by(playerID) |>
+                summarize(G_managed = sum(G, na.rm = TRUE),
+                          Total_W   = sum(W, na.rm = TRUE),
+                          Total_L   = sum(L, na.rm = TRUE)) |>
+                collect()
+
+managers
+```
+
+Then we'll create a new variable with the career win/loss percentage and sort from the largest to the smallest.
+
+```{r hw_3_task_4_response_6_part_2}
+managers <- managers |>
+              mutate(Career_W_Ratio = Total_W/G_managed) |>
+              arrange(desc(Career_W_Ratio)) |>
+              collect()
+
+managers
+```
+
+## Hall of Fame Managers
+For the last part, we combine the previous two lists to see the overall win percentage for all those Hall of Fame players who also managed teams. Since this list is fewer than $100$, we'll print out the entire `tibble`.
+
+```{r hw_3_task_4_response_7}
+HOFmanagers <- inner_join(HOF, managers,
+                          by = "playerID") |>
+                  arrange(desc(Career_W_Ratio)) |>
+                  collect()
+
+print(HOFmanagers, n = Inf)
+```
+
+Finally, we close the connection.
+
+```{r homework_3_task_4_conclusion}
+dbDisconnect(con)
+```
