@@ -60,6 +60,7 @@ The data sets for this portion come from the [UCI machine learning repository](h
 Opening this file shows that the data is delimited by commas, `,`. The source of the data is [here]( https://www4.stat.ncsu.edu/~online/datasets/glass.data).
 
 1. First we create the column names and read in the data.
+
 ```{r hw_3_task_2_response_1}
 glass_col_names <- c("Id", "RI", "Na", "Mg", "Al", "Si", "K", "Ca", "Ba", "Fe",
                      "Type_of_glass")
@@ -72,6 +73,7 @@ glass
 ```
 
 2. Next we use a chain to overwrite the `Type_of_glass` variable and create a factor version of this variable. Then we replace the numbered factors with descriptive string factors.
+
 ```{r hw_3_task_2_response_2}
 glass_factors <- c(building_windows_float_processed = '1', 
                    building_windows_non_float_processed = '2',
@@ -92,6 +94,7 @@ glass
 Note that while a warning is given regarding the factor level `4`, viz., `vehicle_windows_non_float_processed`, this is merely because this factor, as indicated in the file description, has no observations in this database.
 
 3. Finally, we purge the database of all observations except those where the iron, `Fe`, is less than $0.2$ and the `Type_of_glass` is either `tableware` or `headlamps`.
+
 ```{r hw_3_task_2_response_3}
 glass <- glass |>
             filter((Fe < 0.3) & 
@@ -104,6 +107,7 @@ glass
 This data set, found [here](https://www4.stat.ncsu.edu/online/datasets/yeast.data), is delimited by ~~double-spaces, `  ` a tab, evidently~~ white spaces, but some variables have spaces within them, so we must use the `read_table` function, which separates columns across __any__ whitespace.
 
 1. First we read in the data, manually assigned column names.
+
 ```{r hw_3_task_2_response_4}
 yeast_columns <- c("seq_name", "mcg", "gvh", "alm", "mit", "erl", "pox", "vac",
                    "nuc", "class")
@@ -115,6 +119,7 @@ yeast
 ```
 
 2. Next we remove the `seq_name` and `nuc` columns.
+
 ```{r hw_3_task_2_response_5}
 yeast <- yeast |>
             select(-seq_name, -nuc)
@@ -123,6 +128,7 @@ yeast
 ```
 
 3. Finally we add columns corresponding to the mean and median of the numeric variables, `mcg`, `gvh`, `alm`, `mit`, `erl`, and `pox` at each class grouping.
+
 ```{r hw_3_task_2_response_6}
 yeast <- yeast |>
             group_by(class) |>
@@ -139,3 +145,110 @@ yeast
 _NB_: The above was more complicated than it needed to be, accounting for `NA` values which did not exist in the original data set. They were introduced by incorrectly reading in the file with `read_delim` and using a double-space, `  `, as the delimiter. Some of the observations had a space in the `seq_name`, causing the `mcg` column to begin with a space and thus interpreted as an `NA`.
 
 # Task 3: Combining Excel and Delimited Data
+This task examines two sets of data "related to red and white variants of the Portuguese 'Vinho Verde' wine."
+
+## Read In and Tidy Data
+1. First we download the file from [here](https://www4.stat.ncsu.edu/~online/datasets/white-wine.xlsx) into our current project directory and import the data from the first sheet.
+
+```{r hw_3_task_3_response_1}
+library(readxl)
+
+white_wine <- read_xlsx("white-wine.xlsx",
+                        sheet = 1)
+
+white_wine
+```
+
+2. Many of the variables have non-standard names and must be referenced using a back-tick  character, `. To remedy this, we will read in the second sheet, which contains a column of standard names of these variables and then we will overwrite the previous variable names.
+
+```{r hw_3_task_3_response_2}
+wine_col_names <- read_xlsx("white-wine.xlsx",
+                            sheet = "Sheet2",
+                            col_names = FALSE)
+
+colnames(white_wine) <- simplify(wine_col_names) # to convert to vector
+
+white_wine
+```
+
+(Note: The current file on the NCSU server doesn't have a `Sheet2`, so I added it manually to my local file.)
+
+3. Then we add a column, distinguishing this set of data as exclusively white wine before we begin to merge it with the red wine data set.
+
+```{r hw_3_task_3_response_3}
+white_wine <- white_wine |>
+                mutate(type = "white")
+
+white_wine
+```
+
+4. Now we download the red wine data [here](https://www4.stat.ncsu.
+edu/~online/datasets/red-wine.csv) and save it locally. Then we read in the data, delimited by semicolon, `;`, make sure the columns have the same standard names as before, and append a type column to distinguish it from the white wine upon merging.
+
+```{r hw_3_task_3_response_4}
+wine_col_types <- rep("d", times = 12)
+
+red_wine <- read_delim("red-wine.csv",
+                       delim = ";",
+                       col_types = wine_col_types,
+                       col_names = simplify(wine_col_names),
+                       skip = 1)
+
+red_wine <- red_wine |>
+              mutate(type = "red")
+
+red_wine
+```
+
+Note that `read_csv2` is not appropriate here because although it does delimit by semicolon, `;`, it also assumes commas, `,`, take the place of decimals, which is not appropriate to this (American) data set.
+
+5. Finally, we combine the two sets of wine data.
+
+```{r hw_3_task_3_response_5}
+wine_data <- bind_rows(white_wine, red_wine)
+
+wine_data
+```
+
+## Manipulate
+6. We restrict our sample to "high" quality (`quality > 6.5`) and "reasonable" alcohol level (`alcohol < 13.2`).
+
+```{r hw_3_task_3_response_6}
+wine_data_modified <- wine_data |>
+                        filter((quality > 6.5) & (alcohol < 13.2))
+
+wine_data_modified
+```
+
+(Note: Since the maximum `alcohol` level is $14.9$, I assumed you meant $13.2$ instead of $132$.)
+
+7. Now we sort from highest to lowest `quality`.
+
+```{r hw_3_task_3_response_7}
+wine_data_modified <- wine_data_modified |>
+                        arrange(desc(quality)) # arrange descending
+
+wine_data_modified
+```
+
+8. Now we look at just the variables containing `acid`, `alcohol`, `type`, and `quality`.
+
+```{r hw_3_task_3_response_8}
+wine_data_modified <- wine_data_modified |>
+                        select(contains("acid"), 
+                               alcohol, type, quality)
+
+wine_data_modified
+```
+
+9. Lastly, for each level of `quality`, we find the mean and standard deviation of the `alcohol` variable.
+
+```{r hw_3_task_3_response_9}
+wine_data_final <- wine_data_modified |>
+                     group_by(quality) |>
+                     mutate(across(alcohol, mean, .names = "mean_alc")) |>
+                     mutate(across(alcohol, sd, .names = "sd_alc"))
+
+wine_data_final
+```
+

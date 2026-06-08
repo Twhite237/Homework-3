@@ -452,6 +452,286 @@ cols(
 </div>
 </div>
 <p><em>NB</em>: The above was more complicated than it needed to be, accounting for <code>NA</code> values which did not exist in the original data set. They were introduced by incorrectly reading in the file with <code>read_delim</code> and using a double-space, <code></code>, as the delimiter. Some of the observations had a space in the <code>seq_name</code>, causing the <code>mcg</code> column to begin with a space and thus interpreted as an <code>NA</code>.</p>
+</section>
+</section>
+<section id="task-3-combining-excel-and-delimited-data" class="level1">
+<h1>Task 3: Combining Excel and Delimited Data</h1>
+<p>This task examines two sets of data “related to red and white variants of the Portuguese ‘Vinho Verde’ wine.”</p>
+<section id="read-in-and-tidy-data" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-and-tidy-data">Read In and Tidy Data</h2>
+<ol type="1">
+<li>First we download the file from <a href="https://www4.stat.ncsu.edu/~online/datasets/white-wine.xlsx">here</a> into our current project directory and import the data from the first sheet.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'readxl' was built under R version 4.5.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>white_wine <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"white-wine.xlsx"</span>,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">sheet =</span> <span class="dv">1</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>white_wine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4,898 × 12
+   `fixed acidity` `volatile acidity` `citric acid` `residual sugar` chlorides
+             &lt;dbl&gt;              &lt;dbl&gt;         &lt;dbl&gt;            &lt;dbl&gt;     &lt;dbl&gt;
+ 1             7                 0.27          0.36             20.7     0.045
+ 2             6.3               0.3           0.34              1.6     0.049
+ 3             8.1               0.28          0.4               6.9     0.05 
+ 4             7.2               0.23          0.32              8.5     0.058
+ 5             7.2               0.23          0.32              8.5     0.058
+ 6             8.1               0.28          0.4               6.9     0.05 
+ 7             6.2               0.32          0.16              7       0.045
+ 8             7                 0.27          0.36             20.7     0.045
+ 9             6.3               0.3           0.34              1.6     0.049
+10             8.1               0.22          0.43              1.5     0.044
+# ℹ 4,888 more rows
+# ℹ 7 more variables: `free sulfur dioxide` &lt;dbl&gt;,
+#   `total sulfur dioxide` &lt;dbl&gt;, density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;,
+#   alcohol &lt;dbl&gt;, quality &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<ol start="2" type="1">
+<li>Many of the variables have non-standard names and must be referenced using a back-tick character, `. To remedy this, we will read in the second sheet, which contains a column of standard names of these variables and then we will overwrite the previous variable names.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>wine_col_names <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"white-wine.xlsx"</span>,</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">sheet =</span> <span class="st">"Sheet2"</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">col_names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+• `` -&gt; `...1`</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(white_wine) <span class="ot">&lt;-</span> <span class="fu">simplify</span>(wine_col_names) <span class="co"># to convert to vector</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>white_wine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4,898 × 12
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           7               0.27        0.36           20.7     0.045
+ 2           6.3             0.3         0.34            1.6     0.049
+ 3           8.1             0.28        0.4             6.9     0.05 
+ 4           7.2             0.23        0.32            8.5     0.058
+ 5           7.2             0.23        0.32            8.5     0.058
+ 6           8.1             0.28        0.4             6.9     0.05 
+ 7           6.2             0.32        0.16            7       0.045
+ 8           7               0.27        0.36           20.7     0.045
+ 9           6.3             0.3         0.34            1.6     0.049
+10           8.1             0.22        0.43            1.5     0.044
+# ℹ 4,888 more rows
+# ℹ 7 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>(Note: The current file on the NCSU server doesn’t have a <code>Sheet2</code>, so I added it manually to my local file.)</p>
+<ol start="3" type="1">
+<li>Then we add a column, distinguishing this set of data as exclusively white wine before we begin to merge it with the red wine data set.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>white_wine <span class="ot">&lt;-</span> white_wine <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">mutate</span>(<span class="at">type =</span> <span class="st">"white"</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>white_wine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4,898 × 13
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           7               0.27        0.36           20.7     0.045
+ 2           6.3             0.3         0.34            1.6     0.049
+ 3           8.1             0.28        0.4             6.9     0.05 
+ 4           7.2             0.23        0.32            8.5     0.058
+ 5           7.2             0.23        0.32            8.5     0.058
+ 6           8.1             0.28        0.4             6.9     0.05 
+ 7           6.2             0.32        0.16            7       0.045
+ 8           7               0.27        0.36           20.7     0.045
+ 9           6.3             0.3         0.34            1.6     0.049
+10           8.1             0.22        0.43            1.5     0.044
+# ℹ 4,888 more rows
+# ℹ 8 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;,
+#   type &lt;chr&gt;</code></pre>
+</div>
+</div>
+<ol start="4" type="1">
+<li>Now we download the red wine data <a href="https://www4.stat.ncsu.%20edu/~online/datasets/red-wine.csv">here</a> and save it locally. Then we read in the data, delimited by semicolon, <code>;</code>, make sure the columns have the same standard names as before, and append a type column to distinguish it from the white wine upon merging.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>wine_col_types <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="st">"d"</span>, <span class="at">times =</span> <span class="dv">12</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>red_wine <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">"red-wine.csv"</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">delim =</span> <span class="st">";"</span>,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">col_types =</span> wine_col_types,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">col_names =</span> <span class="fu">simplify</span>(wine_col_names),</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>                       <span class="at">skip =</span> <span class="dv">1</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>red_wine <span class="ot">&lt;-</span> red_wine <span class="sc">|&gt;</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">mutate</span>(<span class="at">type =</span> <span class="st">"red"</span>)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>red_wine</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,599 × 13
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           7.4             0.7         0               1.9     0.076
+ 2           7.8             0.88        0               2.6     0.098
+ 3           7.8             0.76        0.04            2.3     0.092
+ 4          11.2             0.28        0.56            1.9     0.075
+ 5           7.4             0.7         0               1.9     0.076
+ 6           7.4             0.66        0               1.8     0.075
+ 7           7.9             0.6         0.06            1.6     0.069
+ 8           7.3             0.65        0               1.2     0.065
+ 9           7.8             0.58        0.02            2       0.073
+10           7.5             0.5         0.36            6.1     0.071
+# ℹ 1,589 more rows
+# ℹ 8 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;,
+#   type &lt;chr&gt;</code></pre>
+</div>
+</div>
+<p>Note that <code>read_csv2</code> is not appropriate here because although it does delimit by semicolon, <code>;</code>, it also assumes commas, <code>,</code>, take the place of decimals, which is not appropriate to this (American) data set.</p>
+<ol start="5" type="1">
+<li>Finally, we combine the two sets of wine data.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>wine_data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(white_wine, red_wine)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>wine_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6,497 × 13
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           7               0.27        0.36           20.7     0.045
+ 2           6.3             0.3         0.34            1.6     0.049
+ 3           8.1             0.28        0.4             6.9     0.05 
+ 4           7.2             0.23        0.32            8.5     0.058
+ 5           7.2             0.23        0.32            8.5     0.058
+ 6           8.1             0.28        0.4             6.9     0.05 
+ 7           6.2             0.32        0.16            7       0.045
+ 8           7               0.27        0.36           20.7     0.045
+ 9           6.3             0.3         0.34            1.6     0.049
+10           8.1             0.22        0.43            1.5     0.044
+# ℹ 6,487 more rows
+# ℹ 8 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;,
+#   type &lt;chr&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="manipulate" class="level2">
+<h2 class="anchored" data-anchor-id="manipulate">Manipulate</h2>
+<ol start="6" type="1">
+<li>We restrict our sample to “high” quality (<code>quality &gt; 6.5</code>) and “reasonable” alcohol level (<code>alcohol &lt; 13.2</code>).</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>wine_data_modified <span class="ot">&lt;-</span> wine_data <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">filter</span>((quality <span class="sc">&gt;</span> <span class="fl">6.5</span>) <span class="sc">&amp;</span> (alcohol <span class="sc">&lt;</span> <span class="fl">13.2</span>))</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>wine_data_modified</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,211 × 13
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           6.6             0.16        0.4             1.5     0.044
+ 2           6.6             0.17        0.38            1.5     0.032
+ 3           6.2             0.66        0.48            1.2     0.029
+ 4           6.2             0.66        0.48            1.2     0.029
+ 5           6.4             0.31        0.38            2.9     0.038
+ 6           6.8             0.26        0.42            1.7     0.049
+ 7           7.2             0.32        0.36            2       0.033
+ 8           7.4             0.18        0.31            1.4     0.058
+ 9           6.6             0.25        0.29            1.1     0.068
+10           6.2             0.16        0.33            1.1     0.057
+# ℹ 1,201 more rows
+# ℹ 8 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;,
+#   type &lt;chr&gt;</code></pre>
+</div>
+</div>
+<p>(Note: Since the maximum <code>alcohol</code> level is <span class="math inline">\(14.9\)</span>, I assumed you meant <span class="math inline">\(13.2\)</span> instead of <span class="math inline">\(132\)</span>.)</p>
+<ol start="7" type="1">
+<li>Now we sort from highest to lowest <code>quality</code>.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>wine_data_modified <span class="ot">&lt;-</span> wine_data_modified <span class="sc">|&gt;</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">arrange</span>(<span class="fu">desc</span>(quality)) <span class="co"># arrange descending</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>wine_data_modified</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,211 × 13
+   fixed_acidity volatile_acidity citric_acid residual_sugar chlorides
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+ 1           9.1             0.27        0.45           10.6     0.035
+ 2           6.6             0.36        0.29            1.6     0.021
+ 3           7.4             0.24        0.36            2       0.031
+ 4           6.9             0.36        0.34            4.2     0.018
+ 5           7.1             0.26        0.49            2.2     0.032
+ 6           6.2             0.66        0.48            1.2     0.029
+ 7           6.2             0.66        0.48            1.2     0.029
+ 8           6.8             0.26        0.42            1.7     0.049
+ 9           6.7             0.23        0.31            2.1     0.046
+10           6.7             0.23        0.31            2.1     0.046
+# ℹ 1,201 more rows
+# ℹ 8 more variables: free_sulfur_dioxide &lt;dbl&gt;, total_sulfur_dioxide &lt;dbl&gt;,
+#   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, quality &lt;dbl&gt;,
+#   type &lt;chr&gt;</code></pre>
+</div>
+</div>
+<ol start="8" type="1">
+<li>Now we look at just the variables containing <code>acid</code>, <code>alcohol</code>, <code>type</code>, and <code>quality</code>.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>wine_data_modified <span class="ot">&lt;-</span> wine_data_modified <span class="sc">|&gt;</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">"acid"</span>), </span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>                               alcohol, type, quality)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>wine_data_modified</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,211 × 6
+   fixed_acidity volatile_acidity citric_acid alcohol type  quality
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;
+ 1           9.1             0.27        0.45    10.4 white       9
+ 2           6.6             0.36        0.29    12.4 white       9
+ 3           7.4             0.24        0.36    12.5 white       9
+ 4           6.9             0.36        0.34    12.7 white       9
+ 5           7.1             0.26        0.49    12.9 white       9
+ 6           6.2             0.66        0.48    12.8 white       8
+ 7           6.2             0.66        0.48    12.8 white       8
+ 8           6.8             0.26        0.42    10.5 white       8
+ 9           6.7             0.23        0.31    10.7 white       8
+10           6.7             0.23        0.31    10.7 white       8
+# ℹ 1,201 more rows</code></pre>
+</div>
+</div>
+<ol start="9" type="1">
+<li>Lastly, for each level of <code>quality</code>, we find the mean and standard deviation of the <code>alcohol</code> variable.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>wine_data_final <span class="ot">&lt;-</span> wine_data_modified <span class="sc">|&gt;</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">group_by</span>(quality) <span class="sc">|&gt;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">mutate</span>(<span class="fu">across</span>(alcohol, mean, <span class="at">.names =</span> <span class="st">"mean_alc"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">mutate</span>(<span class="fu">across</span>(alcohol, sd, <span class="at">.names =</span> <span class="st">"sd_alc"</span>))</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>wine_data_final</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,211 × 8
+# Groups:   quality [3]
+   fixed_acidity volatile_acidity citric_acid alcohol type  quality mean_alc
+           &lt;dbl&gt;            &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+ 1           9.1             0.27        0.45    10.4 white       9     12.2
+ 2           6.6             0.36        0.29    12.4 white       9     12.2
+ 3           7.4             0.24        0.36    12.5 white       9     12.2
+ 4           6.9             0.36        0.34    12.7 white       9     12.2
+ 5           7.1             0.26        0.49    12.9 white       9     12.2
+ 6           6.2             0.66        0.48    12.8 white       8     11.5
+ 7           6.2             0.66        0.48    12.8 white       8     11.5
+ 8           6.8             0.26        0.42    10.5 white       8     11.5
+ 9           6.7             0.23        0.31    10.7 white       8     11.5
+10           6.7             0.23        0.31    10.7 white       8     11.5
+# ℹ 1,201 more rows
+# ℹ 1 more variable: sd_alc &lt;dbl&gt;</code></pre>
+</div>
+</div>
 
 
 </section>
