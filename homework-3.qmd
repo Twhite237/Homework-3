@@ -100,3 +100,42 @@ glass <- glass |>
 glass
 ```
 
+## Yeast Data
+This data set, found [here](https://www4.stat.ncsu.edu/online/datasets/yeast.data), is delimited by ~~double-spaces, `  ` a tab, evidently~~ white spaces, but some variables have spaces within them, so we must use the `read_table` function, which separates columns across __any__ whitespace.
+
+1. First we read in the data, manually assigned column names.
+```{r hw_3_task_2_response_4}
+yeast_columns <- c("seq_name", "mcg", "gvh", "alm", "mit", "erl", "pox", "vac",
+                   "nuc", "class")
+
+yeast <- read_table("https://www4.stat.ncsu.edu/online/datasets/yeast.data",
+                    col_names = yeast_columns)
+
+yeast
+```
+
+2. Next we remove the `seq_name` and `nuc` columns.
+```{r hw_3_task_2_response_5}
+yeast <- yeast |>
+            select(-seq_name, -nuc)
+
+yeast
+```
+
+3. Finally we add columns corresponding to the mean and median of the numeric variables, `mcg`, `gvh`, `alm`, `mit`, `erl`, and `pox` at each class grouping.
+```{r hw_3_task_2_response_6}
+yeast <- yeast |>
+            group_by(class) |>
+            mutate(across(mcg:vac,
+                          ~ mean(.x, na.rm = TRUE), # this part was tricky, .x is a filler for the generic row
+                          .names = "mean_{.col}")) |>
+            mutate(across(mcg:vac,
+                          ~ median(.x, na.rm = TRUE),
+                          .names = "med_{.col}"))
+
+yeast
+```
+
+_NB_: The above was more complicated than it needed to be, accounting for `NA` values which did not exist in the original data set. They were introduced by incorrectly reading in the file with `read_delim` and using a double-space, `  `, as the delimiter. Some of the observations had a space in the `seq_name`, causing the `mcg` column to begin with a space and thus interpreted as an `NA`.
+
+# Task 3: Combining Excel and Delimited Data
