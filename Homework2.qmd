@@ -38,6 +38,8 @@ iris |>
 
 ## Task 2
 
+### Glass Data
+
 ```{r}
 library(tidyverse)
 ```
@@ -96,7 +98,7 @@ data = data |> filter(Fe < .2, type_glass == "tableware"|type_glass == "headlamp
 head(data)
 ```
 
-## Yeast Data
+### Yeast Data
 
 ```{r}
 yeast = read_table("https://www4.stat.ncsu.edu/online/datasets/yeast.data", col_names = c("seq_name","mcg","gvh","alm","mit","erl","pox","vac","nuc","class"))
@@ -109,5 +111,160 @@ yeast = yeast |> select(-seq_name, -nuc) |>
   mutate(across(.cols = c(mcg,gvh,alm,mit,erl,pox,vac), .fns = c(mean, median), .names = NULL, .unpack = FALSE))
 
 yeast
+```
+
+## Task 3
+
+### Step 1: Read in Data
+```{r}
+library(readxl)
+whiteWine = read_excel("white-wine.xlsx")
+
+print(whiteWine)
+```
+### Step 2: Transform Column Names
+I didn't see a second sheet, so I will do it myself
+```{r}
+whiteWine = whiteWine |> rename(fixed.acidity = `fixed acidity`,
+                      volatile.acidity = `volatile acidity`,
+                      residual.sugar = `residual sugar`,
+                      free.sulfur.dioxide = `free sulfur dioxide`,
+                      total.sulfur.dioxide = `total sulfur dioxide`,
+                      citric.acid = `citric acid`)
+```
+
+
+```{r}
+head(whiteWine)
+```
+
+### Step 3: Add column indicating wine type
+
+```{r}
+whiteWine = whiteWine |> mutate(type = "white")
+
+head(whiteWine)
+```
+
+### Step 4: Read in Red Wine Data
+
+```{r}
+
+redWine = as.tibble(read.delim("https://www4.stat.ncsu.edu/~online/datasets/red-wine.csv", sep = ";"))
+redWine = redWine |> mutate(type = "red")
+head(redWine)
+
+```
+
+
+### Step 5-9: Combine Red and White Datasets, filter, and compute summary stats
+```{r}
+
+wine = bind_rows(redWine,whiteWine)
+
+head(wine)
+```
+
+
+```{r}
+wine = wine |> filter(quality > 6.5, alcohol < 132) |>
+  arrange(quality) |>
+  select(contains("acid"), alcohol, type, quality) |>
+  group_by(quality) |>
+  mutate(across(.cols = c(alcohol), .fns = c(mean, sd), .names = NULL, .unpack = FALSE)) |> rename(mean.alcohol = alcohol_1, sd.alcohol = alcohol_2)
+  
+
+hist(wine$mean.alcohol)
+```
+
+
+## Task 4
+
+### Step 1: Connect and Display all Tables
+
+```{r}
+library(DBI)
+con = dbConnect(RSQLite::SQLite(), "lahman.db")
+
+dbListTables(con)
+```
+### Step 2
+```{r}
+tbl(con, "Teams") |> filter(yearID == 2015)
+```
+
+### Step 3: Repeat with SQL Query
+
+```{r}
+tbl(con, sql(
+  "SELECT * FROM Teams where yearID = 2015"
+))
+```
+
+### Step 4: All hall of fame players, year voted in, and category
+
+```{r}
+hofPlayers = tbl(con, sql(
+  "SELECT playerID, yearID, category FROM HallOfFame"
+))
+
+head(hofPlayers)
+```
+
+### Step 5: Return First and Last Names
+
+```{r}
+
+tbl(con, sql(
+  "SELECT * FROM People"
+))
+
+
+
+```
+
+```{r}
+
+hofPlayers = tbl(con, sql(
+  "SELECT A.playerID as playerID,
+  nameFirst,
+  nameLast,
+  yearID,
+  category
+  FROM(
+  (SELECT playerID, nameFirst, nameLast from People) A INNER JOIN (SELECT playerID, yearID, category FROM HallOfFame) B 
+  on A.playerID = B.playerID)"
+)) |> collect()
+
+head(hofPlayers)
+```
+
+
+### Step 6:
+
+```{r}
+
+managerStats = tbl(con, "Managers") |> select(playerID, G, W, L) |>
+  group_by(playerID) |>
+  summarize(G_managed = sum(G, na.rm = TRUE),
+            Total_W = sum(W, na.rm = TRUE),
+            Total_L = sum(L, na.rm = TRUE)) |> collect()
+
+
+head(managerStats)
+
+
+```
+```{r}
+managerStats = managerStats |> mutate(Total_percentW_managed = Total_W / G_managed) |> arrange(desc(Total_percentW_managed)) |> collect()
+
+head(managerStats)
+```
+
+```{r}
+
+hofManagers = inner_join(managerStats, hofPlayers, by = c("playerID")) |> collect()
+
+head(hofManagers)
 ```
 
